@@ -1,22 +1,41 @@
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { DevTool } from "@hookform/devtools";
 
 export const YouTubeForm = () => {
-  const form = useForm<FormValues>({
-    defaultValues: async () => {
-      const response = await fetch("https://jsonplaceholder.typicode.com/users/1");
-      const data = await response.json();
-      return data;
-    }
-  });
-  const { register, control, handleSubmit, formState } = form;
-  const { errors } = formState;
-
   type FormValues = {
     username: string;
     email: string;
     channel: string;
+    social: {
+      twitter: string;
+      facebook: string;
+    };
+    phoneNumbers: string[];
+    phNumbers: {
+      number: string;
+    }[];
   };
+
+  const form = useForm<FormValues>({
+    defaultValues: {
+      username: "Batman",
+      email: "",
+      channel: "Codevolution",
+      social: {
+        twitter: "",
+        facebook: "",
+      },
+      phoneNumbers: [],
+      phNumbers: [{ number: "" }],
+    },
+  });
+  const { register, control, handleSubmit, formState } = form;
+  const { errors } = formState;
+
+  const { fields, append, remove } = useFieldArray({
+    name: "phNumbers",
+    control: control,
+  });
 
   const onSubmit = (data: FormValues) => {
     console.log("Form submitted", data);
@@ -63,8 +82,7 @@ export const YouTubeForm = () => {
               },
               notBlacklisted: (value) => {
                 return (
-                  !value.endsWith("baddomain.com") ||
-                  "Email is blacklisted"
+                  !value.endsWith("baddomain.com") || "Email is blacklisted"
                 );
               },
             },
@@ -85,6 +103,71 @@ export const YouTubeForm = () => {
           className="border p-2 mb-4"
         />
         <p className="text-rose-600 mb-3">{errors.channel?.message}</p>
+
+        <label htmlFor="channel" className="mb-2">
+          Twitter
+        </label>
+        <input
+          type="text"
+          id="twitter"
+          {...register("social.twitter")}
+          className="border p-2 mb-4"
+        />
+
+        <label htmlFor="channel" className="mb-2">
+          Facebook
+        </label>
+        <input
+          type="text"
+          id="facebook"
+          {...register("social.facebook")}
+          className="border p-2 mb-4"
+        />
+
+        <label htmlFor="primary-phone" className="mb-2">
+          Primary phone number
+        </label>
+        <input
+          type="text"
+          id="primary-phone"
+          {...register("phoneNumbers.0")}
+          className="border p-2 mb-4"
+        />
+
+        <label htmlFor="secondary-phone" className="mb-2">
+          Secondary phone number
+        </label>
+        <input
+          type="text"
+          id="sedondary-phone"
+          {...register("phoneNumbers.1")}
+          className="border p-2 mb-4"
+        />
+
+        <div>
+          <label>List of phone numbers</label>
+          {fields.map((field, index) => (
+            <div key={field.id}>
+              <input
+                type="text"
+                {...register(`phNumbers.${index}.number` as const)}
+                defaultValue={field.number}
+                className="border p-2 mb-4"
+              />
+              {
+                index > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => remove(index)}
+                    >
+                    Remove
+                  </button>
+                )
+              }
+            </div>
+          ))}
+          <button type="button" onClick={() => append({ number: "" })}>Add phone number</button>
+        </div>
 
         <button className="bg-blue-500 text-white py-3 mt-2 rounded-md hover:bg-blue-600">
           Submit
